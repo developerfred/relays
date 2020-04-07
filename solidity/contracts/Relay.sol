@@ -20,6 +20,8 @@ interface IRelay {
         uint256 _limit
     ) external view returns (bool);
 
+    function getCurrentEpochDifficulty() external view returns (uint256);
+    function getPrevEpochDifficulty() external view returns (uint256);
     function getRelayGenesis() external view returns (bytes32);
     function getBestKnownDigest() external view returns (bytes32);
     function getLastReorgCommonAncestor() external view returns (bytes32);
@@ -68,6 +70,9 @@ contract Relay is IRelay {
     mapping (bytes32 => bytes32) internal previousBlock;
     mapping (bytes32 => uint256) internal blockHeight;
 
+    uint256 internal currentEpochDiff;
+    uint256 internal prevEpochDiff;
+
 
     /// @notice                   Gives a starting point for the relay
     /// @dev                      We don't check this AT ALL really. Don't use relays with bad genesis
@@ -87,6 +92,8 @@ contract Relay is IRelay {
         lastReorgCommonAncestor = _genesisDigest;
         blockHeight[_genesisDigest] = _height;
         blockHeight[_periodStart] = _height.sub(_height % 2016);
+
+        currentEpochDiff = _genesisHeader.extractDifficulty();
     }
 
     /// @notice             Adds headers to storage after validating
@@ -213,6 +220,14 @@ contract Relay is IRelay {
             (_actualTarget & _expectedTarget) == _actualTarget,
             "Invalid retarget provided");
 
+        // If the current known prevEpochDiff doesn't match, and this old period is near the chaintip/
+        // update the stored prevEpochDiff
+        // Don't update if this is a deep past epoch
+        uint256 _oldDiff = _oldPeriodStartHeader.extractDifficulty();
+        if (prevEpochDiff != _oldDiff && _findHeight(_oldPeriodEndHeader) > _findHeight(bestKnownDigest).sub(2016)) {
+          prevEpochDiff = _oldDiff;
+        }
+
         // Pass all but the first through to be added
         return _addHeaders(_oldPeriodEndHeader, _headers, true);
     }
@@ -320,6 +335,12 @@ contract Relay is IRelay {
 
         bestKnownDigest = _newBestDigest;
         lastReorgCommonAncestor = _ancestor;
+
+        uint256 _newDiff = _newBest.extractDifficulty();
+        if (_newDiff != currentEpochDiff) {
+          currentEpochDiff = _newDiff;
+        }
+
         emit Reorg(
             _currentBestDigest,
             _newBestDigest,
@@ -454,6 +475,19 @@ contract Relay is IRelay {
         bytes calldata _right
     ) external view returns (bytes32) {
         return _heaviestFromAncestor(_ancestor, _left, _right);
+    }
+
+    /// @notice     Getter for currentEpochDiff
+    /// @dev        This is updated when a new heavist header has a new diff
+    /// @return     The difficulty of the bestKnownDigest
+    function getCurrentEpochDifficulty() external view returns (uint256) {
+      return currentEpochDiff;
+    }
+    /// @notice     Getter for prevEpochDiff
+    /// @dev        This is updated when a difficulty change is accepted
+    /// @return     The difficulty of the previous epoch
+    function getPrevEpochDifficulty() external view returns (uint256) {
+      return prevEpochDiff;
     }
 
     /// @notice     Getter for relayGenesis
