@@ -40,8 +40,8 @@ func NewReorgEvent(prev, new, lca Hash256Digest) sdk.Event {
 func NewExtensionEvent(first, last BitcoinHeader) sdk.Event {
 	return sdk.NewEvent(
 		EventTypeExtension,
-		sdk.NewAttribute(AttributeKeyFirstBlock, "0x"+hex.EncodeToString(first.HashLE[:])),
-		sdk.NewAttribute(AttributeKeyLastBlock, "0x"+hex.EncodeToString(last.HashLE[:])),
+		sdk.NewAttribute(AttributeKeyFirstBlock, "0x"+hex.EncodeToString(first.Hash[:])),
+		sdk.NewAttribute(AttributeKeyLastBlock, "0x"+hex.EncodeToString(last.Hash[:])),
 	)
 }
 

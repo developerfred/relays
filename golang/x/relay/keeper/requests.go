@@ -129,7 +129,7 @@ func (k Keeper) getNextID(ctx sdk.Context) (types.RequestID, sdk.Error) {
 	return newID, nil
 }
 
-func (k Keeper) checkRequests(ctx sdk.Context, inputIndex, outputIndex uint8, vin []byte, vout []byte, requestID types.RequestID) (bool, sdk.Error) {
+func (k Keeper) checkRequests(ctx sdk.Context, inputIndex, outputIndex uint, vin []byte, vout []byte, requestID types.RequestID) (bool, sdk.Error) {
 	if !btcspv.ValidateVin(vin) {
 		return false, types.ErrInvalidVin(types.DefaultCodespace)
 	}
@@ -162,7 +162,10 @@ func (k Keeper) checkRequests(ctx sdk.Context, inputIndex, outputIndex uint8, vi
 
 	hasSpends := req.Spends != btcspv.Hash256([]byte{0})
 	if hasSpends {
-		in := btcspv.ExtractInputAtIndex(vin, inputIndex)
+		in, err := btcspv.ExtractInputAtIndex(vin, inputIndex)
+		if err != nil {
+			return false, types.FromBTCSPVError(types.DefaultCodespace, err)
+		}
 		outpoint := btcspv.ExtractOutpoint(in)
 		inDigest := btcspv.Hash256(outpoint)
 		if hasSpends && inDigest != req.Spends {

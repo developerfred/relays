@@ -113,7 +113,7 @@ func (k Keeper) ingestHeader(ctx sdk.Context, header types.BitcoinHeader) {
 	store := k.getHeaderStore(ctx)
 
 	buf := k.cdc.MustMarshalBinaryBare(header)
-	store.Set(header.HashLE[:], buf)
+	store.Set(header.Hash[:], buf)
 }
 
 func validateHeaderChain(anchor types.BitcoinHeader, headers []types.BitcoinHeader, internal, isMainnet bool) sdk.Error {
@@ -162,7 +162,7 @@ func validateHeaderChain(anchor types.BitcoinHeader, headers []types.BitcoinHead
 }
 
 func (k Keeper) ingestHeaders(ctx sdk.Context, headers []types.BitcoinHeader, internal bool) sdk.Error {
-	anchor, err := k.GetHeader(ctx, headers[0].PrevHashLE)
+	anchor, err := k.GetHeader(ctx, headers[0].PrevHash)
 	if err != nil {
 		return err
 	}
@@ -215,7 +215,7 @@ func (k Keeper) ingestDifficultyChange(ctx sdk.Context, prevEpochStartLE types.H
 	if err != nil {
 		return err
 	}
-	anchor, err := k.GetHeader(ctx, headers[0].PrevHashLE)
+	anchor, err := k.GetHeader(ctx, headers[0].PrevHash)
 	if err != nil {
 		return err
 	}

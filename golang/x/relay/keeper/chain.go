@@ -120,16 +120,16 @@ func (k Keeper) HeaviestFromAncestor(ctx sdk.Context, ancestor, currentBest, new
 	*/
 
 	if !leftInPeriod && rightInPeriod {
-		return leftBlock.HashLE, nil
+		return leftBlock.Hash, nil
 	}
 	if leftInPeriod && !rightInPeriod {
-		return rightBlock.HashLE, nil
+		return rightBlock.Hash, nil
 	}
 	if leftInPeriod && rightInPeriod {
 		if leftBlock.Height >= rightBlock.Height {
-			return leftBlock.HashLE, nil
+			return leftBlock.Hash, nil
 		}
-		return rightBlock.HashLE, nil
+		return rightBlock.Hash, nil
 	}
 
 	// if !leftInPeriod && !rightInPeriod
@@ -140,9 +140,9 @@ func (k Keeper) HeaviestFromAncestor(ctx sdk.Context, ancestor, currentBest, new
 	rightAccDiff := rightDiff.Mul(sdk.NewUint(uint64(rightBlock.Height % 2016)))
 
 	if leftAccDiff.GTE(rightAccDiff) {
-		return leftBlock.HashLE, nil
+		return leftBlock.Hash, nil
 	}
-	return rightBlock.HashLE, nil
+	return rightBlock.Hash, nil
 }
 
 // MarkNewHeaviest updates the best known digest and LCA
